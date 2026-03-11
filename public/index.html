@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rancangan Aktualiasi - Andy Rasyadi</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
       width: 100%;
@@ -18,205 +14,192 @@
       background: #000;
     }
 
-    /* ── Wrapper: container untuk iframe + tombol musik ── */
+    /* ── Wrapper ── */
     #wrapper {
       position: relative;
       width: 100%;
       height: 100vh;
+      background: #000;
     }
 
-    /* Saat wrapper fullscreen, tetap penuh layar */
     #wrapper:fullscreen,
     #wrapper:-webkit-full-screen {
       width: 100vw;
       height: 100vh;
-      background: #000;
     }
 
     /* ── Iframe ── */
-    .fp-iframe {
-      border: none !important;
-      width: 100% !important;
-      height: 100% !important;
+    #flipbook-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
       display: block;
     }
 
-    /* ── Music toggle button ── */
-    #music-btn {
-      position: absolute;   /* absolute di dalam #wrapper agar ikut fullscreen */
+    /* ── Button base ── */
+    .ctrl-btn {
+      position: absolute;
       bottom: 18px;
-      left: 18px;
       z-index: 9999;
-
       width: 42px;
       height: 42px;
       border-radius: 50%;
       border: none;
       cursor: pointer;
-
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-
+      box-shadow: 0 2px 12px rgba(0,0,0,0.45);
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.2s, transform 0.15s;
     }
 
-    #music-btn:hover {
-      background: rgba(255, 255, 255, 0.28);
-      transform: scale(1.08);
-    }
+    .ctrl-btn:hover  { background: rgba(255,255,255,0.28); transform: scale(1.08); }
+    .ctrl-btn:active { transform: scale(0.95); }
 
-    #music-btn:active {
-      transform: scale(0.95);
-    }
-
-    #music-btn svg {
+    .ctrl-btn svg {
       width: 20px;
       height: 20px;
       fill: #fff;
       display: none;
       flex-shrink: 0;
     }
+    .ctrl-btn svg.visible { display: block; }
 
-    #music-btn svg.visible {
-      display: block;
-    }
+    /* Posisi masing-masing tombol */
+    #music-btn      { left: 18px; }
+    #fullscreen-btn { left: 70px; } /* di sebelah kanan tombol musik */
 
-    /* Ripple pulse saat musik ON */
+    /* Pulse saat musik ON */
     @keyframes pulse-ring {
       0%   { transform: scale(1);   opacity: 0.55; }
       100% { transform: scale(1.7); opacity: 0;    }
     }
-
     #music-btn::before {
       content: '';
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255,255,255,0.35);
       animation: pulse-ring 1.8s ease-out infinite;
       opacity: 0;
       pointer-events: none;
     }
-
-    #music-btn.playing::before {
-      opacity: 1;
-    }
+    #music-btn.playing::before { opacity: 1; }
   </style>
 </head>
 <body>
+<div id="wrapper">
 
-  <!-- Wrapper membungkus iframe + tombol musik -->
-  <div id="wrapper">
+  <!--
+    PENTING: allowfullscreen DIHAPUS dari iframe
+    supaya fullscreen dikontrol oleh tombol kita sendiri,
+    bukan tombol bawaan Heyzine — agar tombol musik tetap tampil.
+  -->
+  <iframe
+    id="flipbook-frame"
+    allow="clipboard-write"
+    scrolling="no"
+    src="https://heyzine.com/flip-book/315e904cff.html"
+  ></iframe>
 
-    <!-- Heyzine Flipbook Embed -->
-    <iframe
-      id="flipbook-frame"
-      allowfullscreen="allowfullscreen"
-      allow="clipboard-write"
-      scrolling="no"
-      class="fp-iframe"
-      src="https://heyzine.com/flip-book/315e904cff.html"
-    ></iframe>
+  <audio id="bg-music" loop preload="auto">
+    <source src="music/background.mp3" type="audio/mpeg" />
+  </audio>
 
-    <!-- Background music — ganti src dengan path file MP3 Anda -->
-    <audio id="bg-music" loop preload="auto">
-      <source src="music/background.mp3" type="audio/mpeg" />
-    </audio>
+  <!-- Tombol Musik (kiri bawah) -->
+  <button id="music-btn" class="ctrl-btn" title="Nyalakan Musik" aria-label="Toggle Musik">
+    <svg id="icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+    <svg id="icon-off" class="visible" viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 18l2 2L21 18.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+  </button>
 
-    <!-- Tombol ON/OFF pojok kiri bawah -->
-    <button id="music-btn" title="Nyalakan Musik" aria-label="Toggle Music">
+  <!-- Tombol Fullscreen (sebelah kanan tombol musik) -->
+  <button id="fullscreen-btn" class="ctrl-btn" title="Fullscreen" aria-label="Toggle Fullscreen">
+    <!-- Icon: masuk fullscreen -->
+    <svg id="icon-expand" class="visible" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+    <!-- Icon: keluar fullscreen -->
+    <svg id="icon-shrink" viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>
+  </button>
 
-      <!-- Icon: speaker ON -->
-      <svg id="icon-on" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-      </svg>
+</div>
 
-      <!-- Icon: speaker OFF -->
-      <svg id="icon-off" class="visible" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06A8.99 8.99 0 0 0 17.73 18l2 2L21 18.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-      </svg>
+<script>
+  const audio       = document.getElementById('bg-music');
+  const musicBtn    = document.getElementById('music-btn');
+  const iconOn      = document.getElementById('icon-on');
+  const iconOff     = document.getElementById('icon-off');
+  const fsBtn       = document.getElementById('fullscreen-btn');
+  const iconExpand  = document.getElementById('icon-expand');
+  const iconShrink  = document.getElementById('icon-shrink');
+  const wrapper     = document.getElementById('wrapper');
 
-    </button>
-  </div><!-- end #wrapper -->
+  /* ── Musik ── */
+  let isPlaying = false;
 
-  <script>
-    const audio      = document.getElementById('bg-music');
-    const btn        = document.getElementById('music-btn');
-    const iconOn     = document.getElementById('icon-on');
-    const iconOff    = document.getElementById('icon-off');
-    const wrapper    = document.getElementById('wrapper');
-    const iframeEl   = document.getElementById('flipbook-frame');
-
-    let isPlaying = false;
-
-    /* ── Toggle musik ── */
-    function setPlaying(state) {
-      isPlaying = state;
-      if (isPlaying) {
-        audio.play().catch(() => {});
-        btn.classList.add('playing');
-        iconOn.classList.add('visible');
-        iconOff.classList.remove('visible');
-        btn.title = 'Matikan Musik';
-      } else {
-        audio.pause();
-        btn.classList.remove('playing');
-        iconOn.classList.remove('visible');
-        iconOff.classList.add('visible');
-        btn.title = 'Nyalakan Musik';
-      }
+  function setPlaying(state) {
+    isPlaying = state;
+    if (isPlaying) {
+      audio.play().catch(() => {});
+      musicBtn.classList.add('playing');
+      iconOn.classList.add('visible');
+      iconOff.classList.remove('visible');
+      musicBtn.title = 'Matikan Musik';
+    } else {
+      audio.pause();
+      musicBtn.classList.remove('playing');
+      iconOn.classList.remove('visible');
+      iconOff.classList.add('visible');
+      musicBtn.title = 'Nyalakan Musik';
     }
+  }
 
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // jangan trigger firstClick listener
-      setPlaying(!isPlaying);
-    });
+  musicBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setPlaying(!isPlaying);
+  });
 
-    /* ── Autoplay setelah interaksi pertama ── */
-    document.addEventListener('click', function firstClick() {
-      if (!isPlaying) setPlaying(true);
-      document.removeEventListener('click', firstClick);
-    }, { once: true });
+  /* Autoplay setelah interaksi pertama */
+  document.addEventListener('click', function firstClick() {
+    if (!isPlaying) setPlaying(true);
+    document.removeEventListener('click', firstClick);
+  }, { once: true });
 
-    /* ── KUNCI: Tangani fullscreen dari Heyzine ──
-       Saat iframe masuk fullscreen, browser menyembunyikan elemen
-       di luar iframe. Kita keluar dari fullscreen iframe, lalu
-       masukkan wrapper ke fullscreen agar tombol musik tetap tampil.
-    */
-    function enterWrapperFullscreen() {
-      if (wrapper.requestFullscreen) {
-        wrapper.requestFullscreen();
-      } else if (wrapper.webkitRequestFullscreen) {
-        wrapper.webkitRequestFullscreen();
-      }
+  /* ── Fullscreen ── */
+  function enterFS() {
+    if (wrapper.requestFullscreen)       wrapper.requestFullscreen();
+    else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+  }
+
+  function exitFS() {
+    if (document.exitFullscreen)              document.exitFullscreen();
+    else if (document.webkitExitFullscreen)   document.webkitExitFullscreen();
+  }
+
+  function isInFS() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  fsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isInFS() ? exitFS() : enterFS();
+  });
+
+  function onFSChange() {
+    if (isInFS()) {
+      iconExpand.classList.remove('visible');
+      iconShrink.classList.add('visible');
+      fsBtn.title = 'Keluar Fullscreen';
+    } else {
+      iconExpand.classList.add('visible');
+      iconShrink.classList.remove('visible');
+      fsBtn.title = 'Fullscreen';
     }
+  }
 
-    document.addEventListener('fullscreenchange', () => {
-      const fs = document.fullscreenElement;
-
-      // Jika yang fullscreen adalah iframe (bukan wrapper kita)
-      if (fs && fs === iframeEl) {
-        // Keluar dulu, lalu masuk dengan wrapper
-        document.exitFullscreen().then(() => {
-          enterWrapperFullscreen();
-        }).catch(() => {});
-      }
-    });
-
-    // Fallback untuk Safari / Chrome lama
-    document.addEventListener('webkitfullscreenchange', () => {
-      const fs = document.webkitFullscreenElement;
-      if (fs && fs === iframeEl) {
-        document.webkitExitFullscreen();
-        setTimeout(() => enterWrapperFullscreen(), 100);
-      }
-    });
-  </script>
-
+  document.addEventListener('fullscreenchange',       onFSChange);
+  document.addEventListener('webkitfullscreenchange', onFSChange);
+</script>
 </body>
 </html>
